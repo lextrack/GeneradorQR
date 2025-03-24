@@ -4,39 +4,87 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:QR"
+        xmlns:viewmodels="clr-namespace:QR.ViewModels"
         mc:Ignorable="d"
-        Title="Generador de Códigos QR" Height="500" Width="600">
-    <Grid>
+        Title="Generador de Códigos QR" Height="600" Width="800">
+
+    <Window.Resources>
+        <Style x:Key="ButtonStyle" TargetType="Button">
+            <Setter Property="Padding" Value="15,8"/>
+            <Setter Property="Margin" Value="5"/>
+            <Setter Property="Background" Value="#3498db"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="FontWeight" Value="Medium"/>
+        </Style>
+    </Window.Resources>
+
+    <Window.DataContext>
+        <viewmodels:MainViewModel/>
+    </Window.DataContext>
+
+    <Grid Margin="20">
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
-        <TextBlock Grid.Row="0" Text="Generador QR" FontSize="24" FontWeight="Bold" Margin="10" HorizontalAlignment="Center"/>
-        <StackPanel Grid.Row="1" Margin="10">
-            <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                <TextBlock Text="Texto:" VerticalAlignment="Center" Margin="0,0,21,0"/>
-                <TextBox x:Name="txtQRContent" Width="350" Height="30" Margin="0,0,10,0"/>
-                <Button x:Name="btnGenerate" Content="Generar" Width="100" Height="30" Click="btnGenerate_Click"/>
+
+        <StackPanel Grid.Row="0" Margin="0,0,0,20">
+            <TextBlock Text="Contenido del Código QR:" FontWeight="Bold" Margin="0,0,0,5"/>
+            <TextBox x:Name="txtQRContent" 
+                     Text="{Binding QrContent, UpdateSourceTrigger=PropertyChanged}" 
+                     Height="80" 
+                     TextWrapping="Wrap" 
+                     AcceptsReturn="True"
+                     Padding="5"/>
+
+            <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                <TextBlock Text="Tamaño:" VerticalAlignment="Center" Margin="0,0,10,0" FontWeight="Bold"/>
+                <ComboBox x:Name="cmbSize" 
+                          ItemsSource="{Binding AvailableSizes}"
+                          SelectedItem="{Binding SelectedSize}"
+                          Width="100"/>
+
+                <TextBlock Text="px" VerticalAlignment="Center" Margin="5,0,0,0"/>
             </StackPanel>
-            <StackPanel Orientation="Horizontal">
-                <TextBlock Text="Tamaño:" VerticalAlignment="Center" Margin="0,0,10,0"/>
-                <ComboBox x:Name="cmbSize" Width="120" SelectedIndex="2">
-                    <ComboBoxItem Content="300x300" Tag="300"/>
-                    <ComboBoxItem Content="500x500" Tag="500"/>
-                    <ComboBoxItem Content="800x800" Tag="800"/>
-                    <ComboBoxItem Content="1000x1000" Tag="1000"/>
-                    <ComboBoxItem Content="1500x1500" Tag="1500"/>
-                </ComboBox>
+
+            <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                <Button x:Name="btnGenerate" 
+                        Content="Generar QR" 
+                        Command="{Binding GenerateQrCommand}"
+                        Style="{StaticResource ButtonStyle}"/>
+
+                <Button x:Name="btnSave" 
+                        Content="Guardar QR" 
+                        Command="{Binding SaveQrCommand}"
+                        Style="{StaticResource ButtonStyle}"/>
+
+                <Button x:Name="btnClear" 
+                        Content="Limpiar" 
+                        Command="{Binding ClearQrCommand}"
+                        Style="{StaticResource ButtonStyle}"/>
             </StackPanel>
         </StackPanel>
-        <Border Grid.Row="2" BorderBrush="Gray" BorderThickness="1" Margin="10">
-            <Image x:Name="imgQRCode" Stretch="Uniform" Margin="10"/>
+
+        <Border Grid.Row="1" 
+                BorderBrush="#e0e0e0" 
+                BorderThickness="1" 
+                Background="#f5f5f5"
+                HorizontalAlignment="Center">
+            <Image x:Name="imgQRCode" 
+                   Source="{Binding QrImage}" 
+                   Stretch="Uniform"
+                   MaxWidth="500" 
+                   MaxHeight="500"
+                   RenderOptions.BitmapScalingMode="HighQuality"/>
         </Border>
-        <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="10" HorizontalAlignment="Center">
-            <Button x:Name="btnSave" Content="Guardar QR" Width="100" Height="30" Margin="0,0,10,0" Click="btnSave_Click"/>
-            <Button x:Name="btnClear" Content="Limpiar" Width="100" Height="30" Click="btnClear_Click"/>
-        </StackPanel>
+
+        <StatusBar Grid.Row="2" Height="30" Margin="0,10,0,0">
+            <StatusBarItem>
+                <TextBlock Text="{Binding StatusMessage}"/>
+            </StatusBarItem>
+        </StatusBar>
     </Grid>
 </Window>
