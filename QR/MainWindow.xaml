@@ -1,0 +1,42 @@
+﻿<Window x:Class="QR.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:QR"
+        mc:Ignorable="d"
+        Title="Generador de Códigos QR" Height="500" Width="600">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <TextBlock Grid.Row="0" Text="Generador QR" FontSize="24" FontWeight="Bold" Margin="10" HorizontalAlignment="Center"/>
+        <StackPanel Grid.Row="1" Margin="10">
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                <TextBlock Text="Texto:" VerticalAlignment="Center" Margin="0,0,21,0"/>
+                <TextBox x:Name="txtQRContent" Width="350" Height="30" Margin="0,0,10,0"/>
+                <Button x:Name="btnGenerate" Content="Generar" Width="100" Height="30" Click="btnGenerate_Click"/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="Tamaño:" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                <ComboBox x:Name="cmbSize" Width="120" SelectedIndex="2">
+                    <ComboBoxItem Content="300x300" Tag="300"/>
+                    <ComboBoxItem Content="500x500" Tag="500"/>
+                    <ComboBoxItem Content="800x800" Tag="800"/>
+                    <ComboBoxItem Content="1000x1000" Tag="1000"/>
+                    <ComboBoxItem Content="1500x1500" Tag="1500"/>
+                </ComboBox>
+            </StackPanel>
+        </StackPanel>
+        <Border Grid.Row="2" BorderBrush="Gray" BorderThickness="1" Margin="10">
+            <Image x:Name="imgQRCode" Stretch="Uniform" Margin="10"/>
+        </Border>
+        <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="10" HorizontalAlignment="Center">
+            <Button x:Name="btnSave" Content="Guardar QR" Width="100" Height="30" Margin="0,0,10,0" Click="btnSave_Click"/>
+            <Button x:Name="btnClear" Content="Limpiar" Width="100" Height="30" Click="btnClear_Click"/>
+        </StackPanel>
+    </Grid>
+</Window>
