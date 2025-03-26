@@ -27,22 +27,18 @@ namespace QR.ViewModels
         {
             _qrCodeModel = new QrCodeModel();
 
-            // Inicializar propiedades
             QrContent = "";
             SelectedSize = 700;
             StatusMessage = "Listo para generar códigos QR";
             CanSave = false;
-
-            // Inicializar lista de tamaños disponibles
+            
             AvailableSizes = new List<int> { 200, 300, 400, 500, 600, 700, 800, 1000 };
 
-            // Inicializar comandos
             GenerateQrCommand = new RelayCommand(GenerateQr, CanGenerateQr);
             SaveQrCommand = new RelayCommand(SaveQr, CanSaveQr);
             ClearQrCommand = new RelayCommand(ClearQr);
         }
 
-        // Propiedades
         public string QrContent
         {
             get => _qrContent;
@@ -113,12 +109,10 @@ namespace QR.ViewModels
 
         public List<int> AvailableSizes { get; }
 
-        // Comandos
         public ICommand GenerateQrCommand { get; }
         public ICommand SaveQrCommand { get; }
         public ICommand ClearQrCommand { get; }
 
-        // Métodos para comandos
         private bool CanGenerateQr(object parameter)
         {
             return !string.IsNullOrWhiteSpace(QrContent);
@@ -147,7 +141,6 @@ namespace QR.ViewModels
         {
             try
             {
-                // Crear un nombre de archivo con la fecha actual
                 string fechaActual = DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss");
                 string nombreArchivo = $"CodigoQR_{fechaActual}";
 
@@ -160,7 +153,6 @@ namespace QR.ViewModels
 
                 if (saveDialog.ShowDialog() == true)
                 {
-                    // Si necesitamos un tamaño diferente al mostrado, regeneramos el QR
                     BitmapSource qrToSave = QrImage;
                     if (QrImage.PixelWidth != SelectedSize)
                     {
@@ -192,7 +184,6 @@ namespace QR.ViewModels
             StatusMessage = "Se ha limpiado el contenido";
         }
 
-        // Implementación de INotifyPropertyChanged
         public event PropertyChangedEventHandler PropertyChanged;
 
         protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
