@@ -3,12 +3,17 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:QR"
+        xmlns:converters="clr-namespace:QR.Converters"
         xmlns:viewmodels="clr-namespace:QR.ViewModels"
         mc:Ignorable="d"
         Title="Generador de Códigos QR" Height="600" Width="800">
 
     <Window.Resources>
+        <!-- Convertidores -->
+        <BooleanToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
+        <converters:NullToVisibilityConverter x:Key="NullToVisibilityConverter"/>
+
+        <!-- Estilos -->
         <Style x:Key="ButtonStyle" TargetType="Button">
             <Setter Property="Padding" Value="15,8"/>
             <Setter Property="Margin" Value="5"/>
@@ -17,7 +22,43 @@
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="BorderBrush" Value="Transparent"/>
             <Setter Property="FontWeight" Value="Medium"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#2980b9"/>
+                </Trigger>
+                <Trigger Property="IsEnabled" Value="False">
+                    <Setter Property="Background" Value="#bdc3c7"/>
+                    <Setter Property="Cursor" Value="Arrow"/>
+                </Trigger>
+            </Style.Triggers>
         </Style>
+
+        <Style x:Key="SaveButtonStyle" TargetType="Button" BasedOn="{StaticResource ButtonStyle}">
+            <Setter Property="Background" Value="#27ae60"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#229954"/>
+                </Trigger>
+                <Trigger Property="IsEnabled" Value="False">
+                    <Setter Property="Background" Value="#bdc3c7"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="ClearButtonStyle" TargetType="Button" BasedOn="{StaticResource ButtonStyle}">
+            <Setter Property="Background" Value="#e74c3c"/>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#c0392b"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Storyboard x:Key="PulseAnimation" RepeatBehavior="Forever">
+            <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                           From="0.3" To="1" Duration="0:0:0.8" AutoReverse="True"/>
+        </Storyboard>
     </Window.Resources>
 
     <Window.DataContext>
@@ -33,12 +74,24 @@
 
         <StackPanel Grid.Row="0" Margin="0,0,0,20">
             <TextBlock Text="Contenido del Código QR:" FontWeight="Bold" Margin="0,0,0,5"/>
-            <TextBox x:Name="txtQRContent" 
-                     Text="{Binding QrContent, UpdateSourceTrigger=PropertyChanged}" 
-                     Height="80" 
-                     TextWrapping="Wrap" 
-                     AcceptsReturn="True"
-                     Padding="5"/>
+            <Grid>
+                <TextBox x:Name="txtQRContent" 
+                         Text="{Binding QrContent, UpdateSourceTrigger=PropertyChanged}" 
+                         Height="80" 
+                         TextWrapping="Wrap" 
+                         AcceptsReturn="True"
+                         Padding="5"/>
+
+                <!-- 
+                <TextBlock Text="⚡ Generación automática" 
+                          VerticalAlignment="Top" 
+                          HorizontalAlignment="Right"
+                          Margin="0,2,5,0"
+                          Foreground="#27ae60"
+                          FontSize="10"
+                          FontWeight="SemiBold"
+                          Opacity="0.7"/> -->
+            </Grid>
 
             <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
                 <TextBlock Text="Tamaño:" VerticalAlignment="Center" Margin="0,0,10,0" FontWeight="Bold"/>
@@ -47,43 +100,83 @@
                           SelectedItem="{Binding SelectedSize}"
                           Width="100"/>
 
-                <TextBlock Text="px" VerticalAlignment="Center" Margin="5,0,0,0"/>
+                <TextBlock Text="px" VerticalAlignment="Center" Margin="5,0,20,0"/>
+
+                <Border Background="#FF0A9EC5" 
+                        CornerRadius="3" 
+                        Padding="5"
+                        Visibility="{Binding IsGenerating, Converter={StaticResource BoolToVisibilityConverter}}">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock x:Name="txtGenerating" Text="●" Foreground="White" FontSize="14" Margin="0,-3,5,0">
+                            <TextBlock.Triggers>
+                                <EventTrigger RoutedEvent="Loaded">
+                                    <BeginStoryboard Storyboard="{StaticResource PulseAnimation}"/>
+                                </EventTrigger>
+                            </TextBlock.Triggers>
+                        </TextBlock>
+                        <TextBlock Text="Generando..." Foreground="White" FontWeight="Medium" FontSize="11"/>
+                    </StackPanel>
+                </Border>
             </StackPanel>
 
             <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
-                <Button x:Name="btnGenerate" 
-                        Content="Generar QR" 
-                        Command="{Binding GenerateQrCommand}"
-                        Style="{StaticResource ButtonStyle}"/>
-
                 <Button x:Name="btnSave" 
-                        Content="Guardar QR" 
+                        Content="💾 Guardar QR" 
                         Command="{Binding SaveQrCommand}"
-                        Style="{StaticResource ButtonStyle}"/>
+                        Style="{StaticResource SaveButtonStyle}"/>
 
                 <Button x:Name="btnClear" 
-                        Content="Limpiar" 
+                        Content="🗑️ Limpiar" 
                         Command="{Binding ClearQrCommand}"
-                        Style="{StaticResource ButtonStyle}"/>
+                        Style="{StaticResource ClearButtonStyle}"/>
             </StackPanel>
         </StackPanel>
 
         <Border Grid.Row="1" 
                 BorderBrush="#e0e0e0" 
-                BorderThickness="1" 
-                Background="#f5f5f5"
-                HorizontalAlignment="Center">
-            <Image x:Name="imgQRCode" 
-                   Source="{Binding QrImage}" 
-                   Stretch="Uniform"
-                   MaxWidth="500" 
-                   MaxHeight="500"
-                   RenderOptions.BitmapScalingMode="HighQuality"/>
+                BorderThickness="2" 
+                Background="#f9f9f9"
+                CornerRadius="3"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center">
+            <Grid>
+ 
+                <StackPanel HorizontalAlignment="Center" 
+                           VerticalAlignment="Center"
+                           Visibility="{Binding QrImage, Converter={StaticResource NullToVisibilityConverter}}">
+                    <TextBlock Text="📝" FontSize="60" HorizontalAlignment="Center" Opacity="0.3"/>
+                    <TextBlock Text="Escribe algo para generar el QR" 
+                              FontSize="14" 
+                              Foreground="#7f8c8d"
+                              HorizontalAlignment="Center"
+                              Margin="5,10,5,5"/>
+                </StackPanel>
+
+                <Image x:Name="imgQRCode" 
+                       Source="{Binding QrImage}" 
+                       Stretch="Uniform"
+                       MaxWidth="500" 
+                       MaxHeight="500"
+                       Margin="20"
+                       RenderOptions.BitmapScalingMode="HighQuality">
+                    <Image.Style>
+                        <Style TargetType="Image">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding QrImage}" Value="{x:Null}">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Image.Style>
+                </Image>
+            </Grid>
         </Border>
 
-        <StatusBar Grid.Row="2" Height="30" Margin="0,10,0,0">
+        <StatusBar Grid.Row="2" Height="35" Margin="0,10,0,0" Background="#ecf0f1">
             <StatusBarItem>
-                <TextBlock Text="{Binding StatusMessage}"/>
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="{Binding StatusMessage}" FontWeight="Medium"/>
+                </StackPanel>
             </StatusBarItem>
         </StatusBar>
     </Grid>

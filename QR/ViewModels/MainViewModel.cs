@@ -10,31 +10,47 @@ using System.Threading.Tasks;
 using System.Windows.Input;
 using System.Windows.Media.Imaging;
 using System.Windows;
+using System.Windows.Threading;
 
 namespace QR.ViewModels
 {
     public class MainViewModel : INotifyPropertyChanged
     {
         private readonly QrCodeModel _qrCodeModel;
+        private DispatcherTimer _debounceTimer;
 
         private string _qrContent;
         private BitmapSource _qrImage;
         private int _selectedSize;
         private string _statusMessage;
         private bool _canSave;
+        private bool _isGenerating;
 
         public MainViewModel()
         {
             _qrCodeModel = new QrCodeModel();
 
+            _debounceTimer = new DispatcherTimer
+            {
+                Interval = TimeSpan.FromMilliseconds(500)
+            };
+            _debounceTimer.Tick += async (s, e) =>
+            {
+                _debounceTimer.Stop();
+                if (!string.IsNullOrWhiteSpace(QrContent))
+                {
+                    await GenerateQrAsync();
+                }
+            };
+
             QrContent = "";
             SelectedSize = 700;
-            StatusMessage = "Listo para generar códigos QR";
+            StatusMessage = "Ingresa texto para generar un código QR";
             CanSave = false;
-            
+            IsGenerating = false;
+
             AvailableSizes = new List<int> { 200, 300, 400, 500, 600, 700, 800, 1000 };
 
-            GenerateQrCommand = new RelayCommand(GenerateQr, CanGenerateQr);
             SaveQrCommand = new RelayCommand(SaveQr, CanSaveQr);
             ClearQrCommand = new RelayCommand(ClearQr);
         }
@@ -49,6 +65,20 @@ namespace QR.ViewModels
                     _qrContent = value;
                     OnPropertyChanged();
                     CommandManager.InvalidateRequerySuggested();
+
+                    _debounceTimer.Stop();
+                    if (!string.IsNullOrWhiteSpace(value))
+                    {
+                        IsGenerating = true;
+                        StatusMessage = "Generando código QR...";
+                        _debounceTimer.Start();
+                    }
+                    else
+                    {
+                        QrImage = null;
+                        IsGenerating = false;
+                        StatusMessage = "Ingresa texto para generar un código QR";
+                    }
                 }
             }
         }
@@ -76,6 +106,14 @@ namespace QR.ViewModels
                 {
                     _selectedSize = value;
                     OnPropertyChanged();
+
+                    if (!string.IsNullOrWhiteSpace(QrContent))
+                    {
+                        _debounceTimer.Stop();
+                        IsGenerating = true;
+                        StatusMessage = "Actualizando tamaño del código QR...";
+                        _debounceTimer.Start();
+                    }
                 }
             }
         }
@@ -107,34 +145,49 @@ namespace QR.ViewModels
             }
         }
 
+        public bool IsGenerating
+        {
+            get => _isGenerating;
+            set
+            {
+                if (_isGenerating != value)
+                {
+                    _isGenerating = value;
+                    OnPropertyChanged();
+                    CommandManager.InvalidateRequerySuggested();
+                }
+            }
+        }
+
         public List<int> AvailableSizes { get; }
 
-        public ICommand GenerateQrCommand { get; }
         public ICommand SaveQrCommand { get; }
         public ICommand ClearQrCommand { get; }
 
-        private bool CanGenerateQr(object parameter)
-        {
-            return !string.IsNullOrWhiteSpace(QrContent);
-        }
-
-        private void GenerateQr(object parameter)
+        private async Task GenerateQrAsync()
         {
             try
             {
+                IsGenerating = true;
+
+                // Simular un pequeño delay para mejor feedback visual
+                await Task.Delay(100);
+
                 QrImage = _qrCodeModel.GenerateQrCode(QrContent, SelectedSize);
-                StatusMessage = $"Código QR generado con éxito (Tamaño: {SelectedSize}x{SelectedSize})";
+
+                IsGenerating = false;
+                StatusMessage = $"Código QR generado ({SelectedSize}x{SelectedSize}px) - {QrContent.Length} caracteres";
             }
             catch (Exception ex)
             {
-                StatusMessage = $"Error al generar el código QR: {ex.Message}";
-                MessageBox.Show($"Error al generar el código QR: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                IsGenerating = false;
+                StatusMessage = $"Error: {ex.Message}";
             }
         }
 
         private bool CanSaveQr(object parameter)
         {
-            return CanSave;
+            return CanSave && !IsGenerating;
         }
 
         private void SaveQr(object parameter)
@@ -160,8 +213,8 @@ namespace QR.ViewModels
                     }
 
                     _qrCodeModel.SaveQrCodeToFile(saveDialog.FileName, qrToSave);
-                    StatusMessage = $"Código QR guardado exitosamente en {saveDialog.FileName}";
-                    MessageBox.Show($"Código QR guardado correctamente en tamaño {SelectedSize}x{SelectedSize}.",
+                    StatusMessage = $"Guardado exitosamente: {System.IO.Path.GetFileName(saveDialog.FileName)}";
+                    MessageBox.Show($"Código QR guardado correctamente en tamaño {SelectedSize}x{SelectedSize}px.",
                                     "Guardado Exitoso",
                                     MessageBoxButton.OK,
                                     MessageBoxImage.Information);
@@ -169,7 +222,7 @@ namespace QR.ViewModels
             }
             catch (Exception ex)
             {
-                StatusMessage = $"Error al guardar el código QR: {ex.Message}";
+                StatusMessage = $"Error al guardar: {ex.Message}";
                 MessageBox.Show($"Error al guardar el código QR: {ex.Message}",
                                 "Error",
                                 MessageBoxButton.OK,
@@ -181,7 +234,8 @@ namespace QR.ViewModels
         {
             QrContent = string.Empty;
             QrImage = null;
-            StatusMessage = "Se ha limpiado el contenido";
+            IsGenerating = false;
+            StatusMessage = "Contenido limpiado";
         }
 
         public event PropertyChangedEventHandler PropertyChanged;
